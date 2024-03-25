@@ -2,7 +2,7 @@ import numpy as np
 import scipy as sp
 #NO OTHER IMPORTS ALLOWED (However, you're allowed to import e.g. scipy.linalg)
 
-def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
+def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement, estimatorType):
     # In this function you implement your estimator. The function arguments
     # are:
     #  time: current time in [s] 
@@ -29,6 +29,12 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
     theta = internalStateIn[2]
     gamma = steeringAngle
     
+    if not (np.isnan(measurement[0]) or np.isnan(measurement[1])):
+        # have a valid measurement
+        x = measurement[0]
+        y = measurement[1]
+        theta = theta + 1
+    
     v = pedalSpeed * 1/2*np.pi * 2*np.pi*0.425 
     
     x_dot = v*np.cos(theta)
@@ -38,15 +44,17 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement):
     """
     EKF - Extended Kalman Filter Code
     """
+    if estimatorType is "EKF":
+        pass 
     
+    elif estimatorType is "UKF":
+        pass 
     
+    elif estimatorType is "PF":
+        pass
+    else:
+        pass
 
-    if not (np.isnan(measurement[0]) or np.isnan(measurement[1])):
-        # have a valid measurement
-        x = measurement[0]
-        y = measurement[1]
-        theta = theta + 1
-        
 
     #we're unreliable about our favourite colour: 
     if myColor == 'green':

@@ -17,14 +17,13 @@ def estInitialize():
     x = 0
     y = 0
     theta = 0
-    color = 'green' 
+    
     # note that there is *absolutely no prescribed format* for this internal state.
     # You can put in it whatever you like. Probably, you'll want to keep the position
     # and angle, and probably you'll remove the color.
     internalState = [x,
                      y,
-                     theta, 
-                     color
+                     theta
                      ]
 
     # replace these names with yours. Delete the second name if you are working alone.

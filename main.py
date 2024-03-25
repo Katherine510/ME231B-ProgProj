@@ -37,7 +37,7 @@ for k in range(numDataPoints):
     measy = experimentalData[k,4]
     
     #run the estimator:
-    x, y, theta, internalState = estRun(t, dt, internalState, gamma, omega, (measx, measy))
+    x, y, theta, internalState = estRun(t, dt, internalState, gamma, omega, (measx, measy), estimatorType)
 
     #keep track:
     estimatedPosition_x[k] = x
