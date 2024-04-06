@@ -27,6 +27,8 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement, es
     x = internalStateIn[0]
     y = internalStateIn[1]
     theta = internalStateIn[2]
+    r = internalStateIn[3]
+    B = internalStateIn[4]
     gamma = steeringAngle
     
     if not (np.isnan(measurement[0]) or np.isnan(measurement[1])):
@@ -35,17 +37,27 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement, es
         y = measurement[1]
         theta = theta + 1
     
-    v = pedalSpeed * 1/2*np.pi * 2*np.pi*0.425 
+    r = np.random.normal(0.425, )
+    v = pedalSpeed * 1/2*np.pi * 2*np.pi*r
     
     x_dot = v*np.cos(theta)
     y_dot = v*np.sin(theta)
-    theta_dot = 
+    theta_dot = v/B * np.tan(gamma)
+    
+    p = np.array([
+        [x + 0.5 * B * np.cos(theta)],
+        [y + 0.5 * B * np.sin(theta)]
+    ])
     
     """
     EKF - Extended Kalman Filter Code
     """
     if estimatorType is "EKF":
-        pass 
+        x_s1 = x + 
+        x_s2 = 
+        x_u = np.array([
+            []
+        ]) 
     
     elif estimatorType is "UKF":
         pass 
@@ -56,11 +68,13 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement, es
         pass
 
 
+    """
     #we're unreliable about our favourite colour: 
     if myColor == 'green':
         myColor = 'red'
     else:
         myColor = 'green'
+    """
 
 
     #### OUTPUTS ####
@@ -69,8 +83,7 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement, es
     # internalStateIn:
     internalStateOut = [x,
                      y,
-                     theta, 
-                     myColor
+                     theta
                      ]
 
     # DO NOT MODIFY THE OUTPUT FORMAT:
