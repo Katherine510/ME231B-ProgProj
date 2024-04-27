@@ -1,5 +1,6 @@
 import numpy as np
 import scipy as sp
+from scipy.stats import truncnorm
 #NO OTHER IMPORTS ALLOWED (However, you're allowed to import e.g. scipy.linalg)
 
 def estInitialize():
@@ -12,24 +13,6 @@ def estInitialize():
     # 
     # The third return variable must be a string with the estimator type
 
-    #we make the internal state a list, with the first three elements the position
-    # x, y; the angle theta; and our favorite color. 
-    x = 0
-    y = 0
-    theta = 0
-    r = 0.425
-    B = 0.8
-    
-    # note that there is *absolutely no prescribed format* for this internal state.
-    # You can put in it whatever you like. Probably, you'll want to keep the position
-    # and angle, and probably you'll remove the color.
-    internalState = [x,
-                     y,
-                     theta,
-                     r,
-                     B
-                     ]
-
     # replace these names with yours. Delete the second name if you are working alone.
     studentNames = ['Katherine How',
                     'Kyle Miller']
@@ -40,7 +23,43 @@ def estInitialize():
     #  'PF' for Particle Filter
     #  'OTHER: XXX' if you're using something else, in which case please
     #                 replace "XXX" with a (very short) description
-    estimatorType = 'EKF'  
+    estimatorType = 'UKF'  
+
+    B_nom = 0.8
+    B_dist = truncnorm(-0.1*B_nom, 0.1*B_nom, loc=B_nom, scale=B_nom*0.1/2)
+    r_nom = 0.425
+    r_dist = truncnorm(-0.05*r_nom, 0.05*r_nom, loc=r_nom, scale=r_nom*0.05/2)
     
+    if estimatorType == 'EKF':
+
+        # x pos, y pos, theta, r, B
+        x = np.array([0, 0, np.pi/4, 0.425, 0.8])
+        P = np.diag([3, 3, np.pi/8, r_dist.var(), B_dist.var()])
+        # ps, theta, gamma process uncertainty
+        var_v = np.diag((200, np.pi/128, np.pi/128))
+        # x & y measurement uncertainty
+        var_w = 2 * np.eye(2)
+
+        internalState = [x, P, var_v, var_w]
+    elif estimatorType == 'UKF':
+        # Initialization
+        x = np.array([0, 0, np.pi/4, 0.425, 0.8])
+        P = np.diag([3, 3, np.pi/8, r_dist.var(), B_dist.var()])
+        # process uncertainty
+        var_v = np.diag((0.1, 0.1, np.pi/32, 0, 0))
+        # x & y measurement uncertainty
+        var_w = 3 * np.eye(2)
+        N = 5
+        internalState = [x, P, var_v, var_w, N]
+    elif estimatorType == 'PF':
+        N = 10*4
+        x = np.random.normal(0, 3, size=(N))
+        y = np.random.normal(0, 3, size=(N))
+        theta = np.random.normal(np.pi/4, np.pi/8, size=(N))
+        r = r_dist.rvs(size=(N))
+        B = B_dist.rvs(size=(N))
+
+        internalState = [x, y, theta, r, B]
+
     return internalState, studentNames, estimatorType
 
