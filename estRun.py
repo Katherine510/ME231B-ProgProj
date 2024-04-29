@@ -4,14 +4,11 @@ import scipy as sp
 
 def q(x, ps, gamma, dt, v=np.array([0, 0, 0])):
     V = x[3]*(ps+v[0])/5
-    x_new = V*np.cos(x[2]+v[1])
-    y_new = V*np.sin(x[2]+v[1])
-    theta_new = V/x[4]*np.tan(gamma+v[2])
-    rB_new = np.zeros((1, 10**3))
-    
-    out = np.vstack((x_new, y_new, theta_new, rB_new, rB_new))
-    
-    return x + dt*out
+    return x + dt*np.array([V*np.cos(x[2]+v[1]),
+                            V*np.sin(x[2]+v[1]),
+                            V/x[4]*np.tan(gamma+v[2]),
+                            0,
+                            0])
 
 def p(x):
     return np.array([x[0]+0.5*x[4]*np.cos(x[2]),
@@ -39,11 +36,21 @@ def H(x):
     return np.array([[1, 0, -0.5*x[4]*np.sin(x[2]), 0, 0.5*np.cos(x[2])],
                         [0, 1,  0.5*x[4]*np.cos(x[2]), 0, 0.5*np.sin(x[2])]])
 
-def fz_x(z, x):
-    z_diff = z - p(x)
-    std = np.sqrt(20)
-    P = sp.stats.norm.cdf(z_diff/std)
-    return P[0]*P[1]
+def fz_x(z, x, weights, N):
+    z_est = np.linalg.norm(x[0:2,:].T - z, axis=1)
+    #print(p(x)[0:2,:][:,0:2].T)
+    #print(p(x)[0:2,:][:,0:2].T - z)
+    z_dist = np.linalg.norm(p(x)[0:2,:].T - z, axis=1)
+    #print(z_dist[0:2])
+    std = 0.3
+    print(sp.stats.norm(z_est, std).pdf(z_dist))
+    weights *= sp.stats.norm(z_est, std).pdf(z_dist)
+    print(weights)
+    weights += 1.e-500 
+    return weights
+
+def neff(weights):
+    return 1. / np.sum(np.square(weights))
 
 def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement, estimatorType):
     # In this function you implement your estimator. The function arguments
@@ -156,7 +163,7 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement, es
         x, y, theta, _, _ = x
     
     elif estimatorType == "PF":
-        x, y, theta, r, B, N = internalStateIn
+        x, y, theta, r, B, N, weights = internalStateIn
 
         x_full = np.vstack((x, y, theta, r, B))
         
@@ -167,26 +174,45 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement, es
         
         v = np.vstack((v_ps, v_theta, v_gamma))
 
-        x_full = q(x_full, pedalSpeed, steeringAngle, dt, v).reshape((5, N))
-
+        x_full = np.array([q(x_full[:,i], pedalSpeed, steeringAngle, dt, v[:,i]) for i in range(N)]).T
+    
         # Measurement Update
         if not (np.isnan(measurement[0]) or np.isnan(measurement[1])):
             # have a valid measurement
             z = np.array([measurement[0],
                           measurement[1]])
 
-            B = np.array([fz_x(z, x_full[:, i]) for i in range(N)])
-            B = B / np.sum(B)
-            cdf = np.cumsum(B)
+            weights = fz_x(z, x_full, N, weights)
+            weights = weights / np.sum(weights)
+            print(weights)
+            cdf = np.cumsum(weights)
 
-            # Resample
-            ind = np.argwhere(cdf>np.random.uniform())
+            ind = np.argwhere(cdf>np.random.uniform())[0, 0]
             print(ind)
-            x_full = np.array([x_full[:, ind[0,0]] for i in range(N)]).T
+            x_full = np.array([x_full[:, ind] for i in range(N)]).T
+            weights.resize(len(x_full))
+            weights.fill (1.0 / len(weights))
 
+            # print(neff(weights))
+            # if neff(weights) < N/2:
+            #     # Resample
+            #     print("yes")
+            #     ind = np.argwhere(cdf > np.random.uniform())[0, 0]
+            #     print(ind)
+            #     x_full = np.array([x_full[:, ind] for i in range(N)]).T
+            #     weights.resize(len(x_full))
+            #     weights.fill (1.0 / len(weights))
+            
+            K = 0.12
+            E = np.max(x_full, axis=1) - np.min(x_full, axis=1)
+            sigma = K*E*N**(-1/5)
+            
+            for i in range(5):
+                x_full[i] += np.random.normal(0, sigma[i], size=(N))
+        
         x, y, theta, r, B = x_full
 
-        internalStateOut = [x, y, theta, r, B, N]
+        internalStateOut = [x, y, theta, r, B, N, weights]
         
         x = np.mean(x)
         y = np.mean(y)
