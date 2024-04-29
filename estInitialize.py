@@ -34,22 +34,23 @@ def estInitialize():
 
         # x pos, y pos, theta, r, B
         x = np.array([0, 0, np.pi/4, 0.425, 0.8])
-        P = np.diag([3, 3, np.pi/8, r_dist.var(), B_dist.var()])
+        P = np.diag([6, 6, np.pi/4, r_dist.var(), B_dist.var()])
         # ps, theta, gamma process uncertainty
-        var_v = np.diag((200, np.pi/128, np.pi/128))
+        var_v = np.diag((20, np.pi/16, np.pi/16))
         # x & y measurement uncertainty
-        var_w = 2 * np.eye(2)
+        var_w = np.diag((4.028517994824541, 0.7228186330417723))
 
         internalState = [x, P, var_v, var_w]
     elif estimatorType == 'UKF':
         # Initialization
         x = np.array([0, 0, np.pi/4, 0.425, 0.8])
-        P = np.diag([3, 3, np.pi/8, r_dist.var(), B_dist.var()])
+        P = np.diag([5, 5, np.pi/4, r_dist.var(), B_dist.var()])
         # process uncertainty
-        var_v = np.diag((0.1, 0.1, np.pi/32, 0, 0))
+        # var_v = np.diag((0.1, 0.1, np.pi/32, 0, 0))
+        var_v = np.diag((15, np.pi/100, np.pi/100))
         # x & y measurement uncertainty
-        var_w = 3 * np.eye(2)
-        N = 5
+        var_w = np.diag((4.028517994824541, 0.7228186330417723))
+        N = 5+3+2
         internalState = [x, P, var_v, var_w, N]
     elif estimatorType == 'PF':
         N = 10*4
