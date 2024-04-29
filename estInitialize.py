@@ -23,7 +23,7 @@ def estInitialize():
     #  'PF' for Particle Filter
     #  'OTHER: XXX' if you're using something else, in which case please
     #                 replace "XXX" with a (very short) description
-    estimatorType = 'UKF'  
+    estimatorType = 'PF'  
 
     B_nom = 0.8
     B_dist = truncnorm(-0.1*B_nom, 0.1*B_nom, loc=B_nom, scale=B_nom*0.1/2)
@@ -53,14 +53,15 @@ def estInitialize():
         N = 5+3+2
         internalState = [x, P, var_v, var_w, N]
     elif estimatorType == 'PF':
-        N = 10*4
-        x = np.random.normal(0, 3, size=(N))
-        y = np.random.normal(0, 3, size=(N))
-        theta = np.random.normal(np.pi/4, np.pi/8, size=(N))
-        r = r_dist.rvs(size=(N))
-        B = B_dist.rvs(size=(N))
+        N = 10
+        x = np.random.normal(0, 3, size=((1, N)))
+        y = np.random.normal(0, 3, size=((1, N)))
+        theta = np.random.normal(np.pi/4, np.pi/8, size=((1, N)))
+        r = r_dist.rvs(size=((1, N)))
+        B = B_dist.rvs(size=((1, N)))
+        weights = np.ones(N) / N
 
-        internalState = [x, y, theta, r, B]
+        internalState = [x, y, theta, r, B, N, weights]
 
     return internalState, studentNames, estimatorType
 

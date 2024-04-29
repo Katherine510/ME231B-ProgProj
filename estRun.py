@@ -51,12 +51,21 @@ def M(x):
     return np.array([[np.cos(x[2]), np.sin(x[2])],
                      [np.sin(x[2]), np.cos(x[2])]])
 
-# def fz_x(z, x):
-#     x, y, theta, _, _ = x
-#     cond = np.abs(z - x - 0.5*B.dot(np.array([[cos()]]))) <= 1
-#     if cond:
-#         return 1
-#     return 0
+def fz_x(z, x, weights, N):
+    z_est = np.linalg.norm(x[0:2,:].T - z, axis=1)
+    #print(p(x)[0:2,:][:,0:2].T)
+    #print(p(x)[0:2,:][:,0:2].T - z)
+    z_dist = np.linalg.norm(p(x)[0:2,:].T - z, axis=1)
+    #print(z_dist[0:2])
+    std = 0.3
+    print(sp.stats.norm(z_est, std).pdf(z_dist))
+    weights *= sp.stats.norm(z_est, std).pdf(z_dist)
+    print(weights)
+    weights += 1.e-500 
+    return weights
+
+def neff(weights):
+    return 1. / np.sum(np.square(weights))
 
 def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement, estimatorType):
     # In this function you implement your estimator. The function arguments
@@ -87,11 +96,10 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement, es
     # B = internalStateIn[4]
     # gamma = steeringAngle
     
-    
     """
     EKF - Extended Kalman Filter Code
     """
-    if estimatorType is "EKF":
+    if estimatorType == "EKF":
         x, P, var_v, var_w = internalStateIn
         
         # Prior Update
@@ -117,7 +125,7 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement, es
         internalStateOut = [x, P, var_v, var_w]
         x, y, theta, _, _ = x
     
-    elif estimatorType is "UKF":
+    elif estimatorType == "UKF":
         x, P, var_v, var_w, N = internalStateIn
         
         xi = np.concatenate((x, np.zeros(5)))
@@ -162,29 +170,61 @@ def estRun(time, dt, internalStateIn, steeringAngle, pedalSpeed, measurement, es
         internalStateOut = [x, P, var_v, var_w, N]
         x, y, theta, _, _ = x
     
-    elif estimatorType is "PF":
-        x, y, theta, r, B, N = internalStateIn
+    elif estimatorType == "PF":
+        x, y, theta, r, B, N, weights = internalStateIn
+
+        x_full = np.vstack((x, y, theta, r, B))
         
         # Prediction Step
-        v = np.random.uniform(-1, 1, size=(N))
-        x = q(x, pedalSpeed, steeringAngle, dt, v)
+        v_ps = np.random.normal(0, 0.1, size=((1, N)))
+        v_theta = np.random.normal(0, np.pi/128, size=((1, N)))
+        v_gamma = np.random.normal(0, np.pi/128, size=((1, N)))
         
-        # # Measurement Update
-        # if not (np.isnan(measurement[0]) or np.isnan(measurement[1])):
-        #     # have a valid measurement
-        #     z = np.array([measurement[0],
-        #                   measurement[1]])
+        v = np.vstack((v_ps, v_theta, v_gamma))
 
-        #     B = np.array([fz_x(z, x[i]) for i in range(N)])
-        #     B = B / np.sum(B)
-        #     cdf = np.cumsum(B)
+        x_full = np.array([q(x_full[:,i], pedalSpeed, steeringAngle, dt, v[:,i]) for i in range(N)]).T
+    
+        # Measurement Update
+        if not (np.isnan(measurement[0]) or np.isnan(measurement[1])):
+            # have a valid measurement
+            z = np.array([measurement[0],
+                          measurement[1]])
 
-        #     # Resample
-        #     x = np.array([x[np.argwhere(cdf>np.random.uniform())[0,0]] for i in range(N)])
+            weights = fz_x(z, x_full, N, weights)
+            weights = weights / np.sum(weights)
+            print(weights)
+            cdf = np.cumsum(weights)
 
-        internalStateOut = [x, P, var_v, var_w, N]
+            ind = np.argwhere(cdf>np.random.uniform())[0, 0]
+            print(ind)
+            x_full = np.array([x_full[:, ind] for i in range(N)]).T
+            weights.resize(len(x_full))
+            weights.fill (1.0 / len(weights))
+
+            # print(neff(weights))
+            # if neff(weights) < N/2:
+            #     # Resample
+            #     print("yes")
+            #     ind = np.argwhere(cdf > np.random.uniform())[0, 0]
+            #     print(ind)
+            #     x_full = np.array([x_full[:, ind] for i in range(N)]).T
+            #     weights.resize(len(x_full))
+            #     weights.fill (1.0 / len(weights))
+            
+            K = 0.12
+            E = np.max(x_full, axis=1) - np.min(x_full, axis=1)
+            sigma = K*E*N**(-1/5)
+            
+            for i in range(5):
+                x_full[i] += np.random.normal(0, sigma[i], size=(N))
         
+        x, y, theta, r, B = x_full
 
+        internalStateOut = [x, y, theta, r, B, N, weights]
+        
+        x = np.mean(x)
+        y = np.mean(y)
+        theta = np.mean(theta)
 
     else:
         pass
