@@ -58,9 +58,9 @@ print('Generating plots')
 figTopView, axTopView = plt.subplots(1, 1)
 axTopView.plot(experimentalData[:,3], experimentalData[:,4], 'rx', label='Meas')
 axTopView.plot(experimentalData[:,5], experimentalData[:,6], 'k:.', label='true')
-x_angles = [-4*np.cos(final_ang), 4*np.cos(final_ang)] + final_x
-y_angles = [-4*np.sin(final_ang), 4*np.sin(final_ang)] + final_y
-axTopView.plot(x_angles, y_angles, label='angle')
+x_angles = [-5*np.cos(final_ang), 5*np.cos(final_ang)] + final_x
+y_angles = [-5*np.sin(final_ang), 5*np.sin(final_ang)] + final_y
+axTopView.plot(x_angles, y_angles, label='theta')
 axTopView.legend()
 axTopView.set_xlabel('x-position [m]')
 axTopView.set_ylabel('y-position [m]')

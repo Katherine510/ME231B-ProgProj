@@ -11,7 +11,7 @@ def q(ps, gamma, dt, x=np.zeros(5), v=np.zeros(3), xi=None):
                                 V*np.sin(x[2]+v[1]),
                                 V/x[4]*np.tan(gamma+v[2]),
                                 0, 0, 0, 0, 0, 0, 0])
-    V = x[3]*(ps+v[0])/5
+    V = x[3]*(ps+v[0])*5
     return x + dt*np.array([V*np.cos(x[2]+v[1]),
                             V*np.sin(x[2]+v[1]),
                             V/x[4]*np.tan(gamma+v[2]),
@@ -26,8 +26,8 @@ def p(x=np.zeros(5), w=np.zeros(2), xi=None):
                      x[1]+0.5*x[4]*np.sin(x[2])+w[0]*np.sin(x[2])+w[1]*np.cos(x[2])])
 
 def A(ps, gamma, dt, x):
-    V = x[3]*ps/5
-    dV = ps/5
+    V = x[3]*ps*5
+    dV = ps*5
     return np.eye(5) + dt*np.array([[0, 0, -V*np.sin(x[2]),       dV*np.sin(x[2]),                        0],
                                     [0, 0,  V*np.cos(x[2]),       dV*np.sin(x[2]),                        0],
                                     [0, 0,               0, dV/x[4]*np.tan(gamma), -V/x[4]**2*np.tan(gamma)],
@@ -35,8 +35,8 @@ def A(ps, gamma, dt, x):
                                     [0, 0,               0,                     0,                        0]])
 
 def L(ps, gamma, dt, x):
-    V = x[3]*ps/5
-    dV = x[3]/5
+    V = x[3]*ps*5
+    dV = x[3]*5
     return dt*np.array([[      dV*np.cos(x[2]), -V*np.sin(x[2]),                       0],
                         [      dV*np.sin(x[2]),  V*np.cos(x[2]),                       0],
                         [dV/x[4]*np.tan(gamma),               0, V/x[4]/np.cos(gamma)**2],
