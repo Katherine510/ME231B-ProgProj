@@ -53,15 +53,14 @@ def estInitialize():
         N = 5+3+2
         internalState = [x, P, var_v, var_w, N]
     elif estimatorType == 'PF':
-        N = 10
+        N = 10**2
         x = np.random.normal(0, 3, size=((1, N)))
         y = np.random.normal(0, 3, size=((1, N)))
         theta = np.random.normal(np.pi/4, np.pi/8, size=((1, N)))
         r = r_dist.rvs(size=((1, N)))
         B = B_dist.rvs(size=((1, N)))
-        weights = np.ones(N) / N
 
-        internalState = [x, y, theta, r, B, N, weights]
+        internalState = [x, y, theta, r, B, N]
 
     return internalState, studentNames, estimatorType
 
