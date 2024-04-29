@@ -12,7 +12,6 @@ def q(ps, gamma, dt, x=np.zeros(5), v=np.zeros(3), xi=None):
                                 V*np.sin(x[2]+v[1]),
                                 V/x[4]*np.tan(gamma+v[2]),
                                 0, 0, 0, 0, 0, 0, 0])
-        
     V = x[3]*(ps+v[0])*5
     return x + dt*np.array([V*np.cos(x[2]+v[1]),
                             V*np.sin(x[2]+v[1]),

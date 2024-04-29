@@ -23,7 +23,7 @@ def estInitialize():
     #  'PF' for Particle Filter
     #  'OTHER: XXX' if you're using something else, in which case please
     #                 replace "XXX" with a (very short) description
-    estimatorType = 'PF'  
+    estimatorType = 'UKF'  
 
     B_nom = 0.8
     B_dist = truncnorm(-0.1*B_nom, 0.1*B_nom, loc=B_nom, scale=B_nom*0.1/2)
@@ -33,21 +33,21 @@ def estInitialize():
     if estimatorType == 'EKF':
 
         # x pos, y pos, theta, r, B
-        x = np.array([0, 0, np.pi/4, 0.425, 0.8])
+        x = np.array([0, 0, np.pi/4, r_nom, B_nom])
         P = np.diag([6, 6, np.pi/4, r_dist.var(), B_dist.var()])
         # ps, theta, gamma process uncertainty
-        var_v = np.diag((20, np.pi/16, np.pi/16))
+        var_v = np.diag((0.5, np.pi/2**7, np.pi/2**9))
         # x & y measurement uncertainty
         var_w = np.diag((4.028517994824541, 0.7228186330417723))
 
         internalState = [x, P, var_v, var_w]
     elif estimatorType == 'UKF':
         # Initialization
-        x = np.array([0, 0, np.pi/4, 0.425, 0.8])
+        x = np.array([0, 0, np.pi/4, r_nom, B_nom])
         P = np.diag([5, 5, np.pi/4, r_dist.var(), B_dist.var()])
         # process uncertainty
         # var_v = np.diag((0.1, 0.1, np.pi/32, 0, 0))
-        var_v = np.diag((15, np.pi/100, np.pi/100))
+        var_v = np.diag((0.1, np.pi/2**7, np.pi/2**9))
         # x & y measurement uncertainty
         var_w = np.diag((4.028517994824541, 0.7228186330417723))
         N = 5+3+2
